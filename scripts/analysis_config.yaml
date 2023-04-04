@@ -1,20 +1,21 @@
 erp:
   data_preprocessing:
     sampling_rate: 40
-    baseline: ~ # !!python/tuple [-0.2, 0] # this requires different load_ival in utils.py
-    reject_uv: 850 #[~, 100] # 200
+    # using baseline requires matching load_ival in get_erp_benchmark_config inutils.py
+    baseline: ~ # !!python/tuple [-0.2, 0]
+    reject_uv: 850 #[~, 100]
     fmin: 0.5
     fmax: 16
-    reject_tmin: ~ #0.1 #These should be the same as the sel_ival for feature preprocessing
+    reject_tmin: ~ #0.1 #These should be the same as the select_ival for feature preprocessing
     reject_tmax: ~ #0.575
 
   spatial_prior_cfg:
-    scm_gamma: [0,0.05,0.5] #[0,0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
-    model_gamma: [0,0.1,0.2,0.3,0.4] #[0,0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+    scm_gamma: [0,0.05,0.5]
+    model_gamma: [0,0.1,0.2,0.3,0.4]
     distance_metric: ['3d']
     spatial_fit_function: ['exp', "poly2", "line"] #, 'poly2','exp_fitted']#,'exp_zero','line_zero'] #'line_fitted', line
-    channelwise_fit: [False]
-    # model_var_source: ["scm"] #,"oracle","decoupled"]
+    #model_var_source: ["scm"] #,"oracle","decoupled"]
+    #model_corr_source: ["oracle"]
     return_info_params: [True]
 
   fallback_modality: "tone_oddball"
@@ -35,13 +36,7 @@ erp:
       select_ival: # this selects all samples in the chosen interval
         erp:
           ival: [0.1, 0.58]
-          D: 20 #50
-        #chris:
-        #  ival: [0.19, 0.21]
-        #  D: 1
-      #  all:
-      #    ival: [0, 0.999]
-      #    D: 40 #50
+          D: 20
   word_oddball:
     feature_preprocessing:
       jumping_means_ival: []
@@ -66,8 +61,8 @@ imagery:
     fmin: 8
     fmax: 32
     channels: null
-  spatial_prior_cfg: #[0.001, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
-    feature_gamma: [0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5] #[0, 0.25, 0.5, 0.75, 1]
+  spatial_prior_cfg:
+    feature_gamma: [0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
     reference_gamma: [0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
 #    distance_metric: ['3d']
     spatial_fit_function: ['poly2', "exp_fitted"] #,'line','line_fitted','exp_fitted','exp_zero','line_zero']

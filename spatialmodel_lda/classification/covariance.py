@@ -131,8 +131,9 @@ def shrink_to_cond(
     """Evaluates condition number of matrix shrunk with decreasing gammas until target condition is reached.
     Returns shrunk matrix and condition number"""
     iters = 0
-    cond_diff = 100  #
     current_gamma = start_gamma
+    cond = np.linalg.cond(S)
+    cond_diff = cond - target_cond  #
     if T is None:
         T = np.diag(np.diag(S))
     while abs(cond_diff) > precision_thresh and iters < max_iters:

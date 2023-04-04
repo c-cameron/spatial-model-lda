@@ -27,12 +27,12 @@ class ShrinkageLinearDiscriminantAnalysis(
     def __init__(
         self,
         priors=None,
-        only_block=False,
         n_times="infer",
         n_channels=31,
         pool_cov=True,
         standardize_shrink=True,
         unit_w=False,
+        only_block=False,
         scm_gamma=None,
         oracle_gamma=None,
         calc_oracle_mean=False,
@@ -43,13 +43,15 @@ class ShrinkageLinearDiscriminantAnalysis(
         fixed_scm_cond_rate=0.002,
         return_info_params=True,
     ):
+        if fixed_scm_cond is not None and scm_gamma != 0:
+            raise ValueError("Only shrinking to a fixed cond if the SCM is not shrunk already!")
         self.priors = priors
-        self.only_block = only_block
         self.n_times = n_times
         self.n_channels = n_channels
         self.pool_cov = pool_cov
         self.standardize_shrink = standardize_shrink
         self.unit_w = unit_w
+        self.only_block = only_block
         self.scm_gamma = scm_gamma
         self.oracle_gamma = oracle_gamma
         self.calc_oracle_mean = calc_oracle_mean
@@ -71,7 +73,6 @@ class ShrinkageLinearDiscriminantAnalysis(
         assert len(X_train) == len(y)
         xTr = X_train.T
 
-        n_classes = 2
         if self.priors is None:
             # here we deviate from the bbci implementation and
             # use the sample priors by default
@@ -90,12 +91,12 @@ class ShrinkageLinearDiscriminantAnalysis(
             )
         else:
             C_cov = np.zeros((xTr.shape[0], xTr.shape[0]))
-            for cur_class in range(n_classes):
+            for cur_class in self.classes_:
                 class_idxs = y == cur_class
                 x_slice = X[:, class_idxs]
                 C_cov += priors[cur_class] * shrinkage(x_slice)[0]
 
-        if self.scm_gamma == 0 and self.fixed_scm_cond is not None:
+        if self.fixed_scm_cond is not None:
             C_cov, self.scm_gamma = shrink_to_cond(
                 C_cov,
                 target_cond=self.fixed_scm_cond,
@@ -104,7 +105,7 @@ class ShrinkageLinearDiscriminantAnalysis(
             )
 
         if self.calc_oracle_mean:
-            oracle_X, oracle_means = subtract_classwise_means(oracle_data["x"].T, oracle_data["y"])
+            _, oracle_means = subtract_classwise_means(oracle_data["x"].T, oracle_data["y"])
             cl_mean = oracle_means
         if self.calc_oracle_cov:
             oracle_X, oracle_means = subtract_classwise_means(oracle_data["x"].T, oracle_data["y"])
@@ -135,7 +136,7 @@ class ShrinkageLinearDiscriminantAnalysis(
         w = w / np.linalg.norm(w) if self.unit_w else w
         b = -0.5 * np.sum(cl_mean * w, axis=0).T + np.log(priors)
 
-        if n_classes == 2:
+        if len(self.classes_) == 2:
             w = w[:, 1] - w[:, 0]
             b = b[1] - b[0]
 
