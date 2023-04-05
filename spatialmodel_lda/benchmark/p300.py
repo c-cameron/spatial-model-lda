@@ -136,8 +136,6 @@ class RejectP300(P300):
             if self.reject_uv is not None:
                 epochs.drop_bad(dict(eeg=self.reject_uv / 1e6))
 
-            if len(epochs) == 0:
-                print(f"All epochs were removed in run {run}. Are you sure this is right?")
             if bmin < tmin or bmax > tmax:
                 epochs.crop(tmin=tmin, tmax=tmax)
             if self.resample is not None:
@@ -164,7 +162,7 @@ class RejectP300(P300):
 
         return X, labels, metadata, (runs, events, epoching_kwargs)
 
-    def get_data(self, dataset, subjects=None, return_epochs=False, return_runs=False, cache=False):
+    def get_data(self, dataset, subjects=None, return_epochs=False, return_runs=False, cache=True):
         """
         Return the data for a list of subject.
 
@@ -213,9 +211,12 @@ class RejectP300(P300):
                 labels = d["labels"]
                 metadata = d["metadata"]
                 X = d["X"]
-                raws = None
                 log.warning("Using cached data: Beware that it might not be the data you want!")
-                return X, labels, metadata, raws
+                return (
+                    X,
+                    labels,
+                    metadata,
+                )
             except Exception as e:
                 print("Could not read cached data. Preprocessing from scratch.")
                 print(e)

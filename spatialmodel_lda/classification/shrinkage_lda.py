@@ -119,7 +119,7 @@ class ShrinkageLinearDiscriminantAnalysis(
 
         # Only use Diagonal Blocks (Spatial covariances) and set everything else to zero
         if self.only_block:
-            self.n_times = calc_n_times(C_cov.shape[0], self.n_channels, self.n_times)
+            self.n_times = calc_n_times(X.shape[0], self.n_channels, self.n_times)
             C_cov_new = np.zeros_like(C_cov)
             for i in range(self.n_times):
                 idx_start = i * self.n_channels
@@ -130,7 +130,7 @@ class ShrinkageLinearDiscriminantAnalysis(
 
         if self.return_info_params:
             cov_matrices = {"sample_cov": C_cov}
-            self.calc_info_params(cov_matrices, oracle_cov)
+            self._calc_info_params(cov_matrices, oracle_cov)
 
         w = np.linalg.solve(C_cov, cl_mean)
         w = w / np.linalg.norm(w) if self.unit_w else w
@@ -143,7 +143,7 @@ class ShrinkageLinearDiscriminantAnalysis(
         self.coef_ = w.reshape((1, -1))
         self.intercept_ = b
 
-    def calc_info_params(self, cov_matrices, oracle_cov=None):
+    def _calc_info_params(self, cov_matrices, oracle_cov=None):
         self.info_params["scm_gamma"] = round(self.scm_gamma, 4)
         if self.calc_oracle_cov:
             self.info_params["oracle_gamma"] = round(self.oracle_gamma, 4)
