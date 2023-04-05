@@ -5,6 +5,7 @@ import time
 import uuid
 import warnings
 from datetime import datetime as dt
+from itertools import product
 from pathlib import Path
 from shutil import copyfile
 
@@ -12,10 +13,10 @@ import moabb
 import numpy as np
 import yaml
 from moabb.evaluations import WithinSessionEvaluation
-from moabb.paradigms import P300
 
+from spatialmodel_lda.benchmark.evaluations import RunbasedBciEvaluation
 from spatialmodel_lda.benchmark.p300 import RejectP300
-from spatialmodel_lda.benchmark.utils import create_erp_bench_debug
+from spatialmodel_lda.benchmark.utils import create_erp_bench_debug, get_info_params
 
 LOCAL_CONFIG_FILE = "local_config.yaml"
 ANALYSIS_CONFIG_FILE = "analysis_config.yaml"
@@ -38,11 +39,12 @@ with open(RESULTS_FOLDER / ANALYSIS_CONFIG_FILE, "r") as conf_f:  # use local an
 
 VALID_DATASETS = [
     "bnci_1",
-    "spot_pooled",
+    "spot",
     "llp",
     "mix",
 ]
 from moabb.datasets import BNCI2014009 as bnci_1
+from moabb.datasets import Sosulski2019
 
 # TODO use all in Moabb available Datasets
 
@@ -92,7 +94,9 @@ moabb.set_log_level("warning")  # if on_nemo else moabb.set_log_level("info")
 
 np.random.seed(43)
 
-
+# bench_cfg = get_erp_benchmark_config(
+#     dataset_name, ana_cfg[bci_paradigm]["data_preprocessing"], subjects=subjects
+# )
 prepro_cfg = ana_cfg[bci_paradigm]["data_preprocessing"]
 # TODO use get_benchmark_config from utils
 bench_cfg = dict()
@@ -106,24 +110,14 @@ bench_cfg["paradigm"] = RejectP300(
     reject_tmax=prepro_cfg["reject_tmax"],
 )
 load_ival = [0, 1]
-
-
-# if dataset_name == "spot_pooled":
-#     d = SpotPilotData(load_single_trials=False)
-#     d.interval = load_ival
-#     if subjects is not None:
-#         d.subject_list = [d.subject_list[i] for i in subjects]
-#     n_channels = d.n_channels
-if dataset_name == "bnci_1":
-    d = bnci_1()
+if dataset_name == "spot":
+    d = Sosulski2019()
     d.interval = load_ival
     if subjects is not None:
         d.subject_list = [d.subject_list[i] for i in subjects]
-    n_channels = 16
-    d.n_channels = n_channels
 
 bench_cfg["dataset"] = d
-bench_cfg["n_channels"] = n_channels
+bench_cfg["n_channels"] = d.n_channels
 
 if bci_paradigm == "erp":
     if hasattr(bench_cfg["dataset"], "stimulus_modality"):
@@ -131,8 +125,7 @@ if bci_paradigm == "erp":
     else:
         feature_preprocessing_key = ana_cfg[bci_paradigm]["fallback_modality"]
 elif bci_paradigm == "imagery":
-    raise NotImplementedError("Alternative feature preprocessing for Imagery not implemented yet")
-    # TODO
+    raise NotImplementedError("Alternative feature preprocessing for Imagery not implemented here")
 
 
 pipelines = dict()
@@ -143,7 +136,6 @@ pipelines.update(
         feature_preprocessing_key,
         bench_cfg["n_channels"],
         calc_oracle_mean=False,
-        model_corr_source=["oracle"],
     )
 )
 
@@ -178,14 +170,30 @@ error_score = "raise"  # np.nan if on_nemo else "raise"
 moabb.set_log_level("debug")
 
 print(f"Benchmark starting at: {dt.now()}")
-evaluation = WithinSessionEvaluation(
+
+
+evaluation = RunbasedBciEvaluation(
     paradigm=bench_cfg["paradigm"],
     datasets=bench_cfg["dataset"],
     suffix=unique_suffix,
     overwrite=overwrite,
     random_state=8,
     error_score=error_score,
-    return_epochs=True,
+    hdf5_path="/tmp/moabb",
+    group_runs=True,  #
+    n_perms=1,  # 5
+    train_ratios=[0.5],  # Train / Test Split on Runs
+    chronological=False,
+    limit_train_epos=[90],  # [
+    #     6,
+    #     12,
+    #     24,
+    # ],  # [6, 12, 24, 48, 96, 192, 384, np.inf],  # ,32,90,180,np.inf],#32,80],
+    pass_oracle_data=True,
+    pass_resting_data=False,
+    info_columns=get_info_params(),
+    oracle_reject_uv=False,
+    # limit_oracle_epos = [6]#,,12,24]#,48,96, 2*96,4*96,np.inf],
 )
 results = evaluation.process(pipelines)
 result_path = RESULTS_FOLDER / f"{identifier}_results.csv"
@@ -193,3 +201,4 @@ result_path = RESULTS_FOLDER / f"{identifier}_results.csv"
 results.to_csv(result_path, encoding="utf-8", index=False)
 t1 = time.time()
 print(f"Benchmark run completed. Elapsed time: {(t1-t0)/3600} hours.")
+print(results)
