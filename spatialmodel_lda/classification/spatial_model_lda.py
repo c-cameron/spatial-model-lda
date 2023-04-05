@@ -24,11 +24,15 @@ from spatialmodel_lda.classification.shrinkage_lda import (
 
 
 class SpatialOnlyLda(ShrinkageLinearDiscriminantAnalysis):
-    """shrinkage Lda with first half-Lda for channelwise weights
+    """
+    Shrinkage LDA implementation using only the Spatial component of the EEG covariance matrix,
+     i.e. the Diagonal Blocks. Also includes the option to perform shrinkage against a covariance
+     model and many options to choose the type of model and shrinkage.
+
 
     Parameters
     ----------
-    TODO
+
     """
 
     def __init__(

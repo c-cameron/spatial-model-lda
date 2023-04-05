@@ -1,17 +1,119 @@
 # Created by chris at 28.03.23 18:29
+import itertools
 from functools import partial
 from itertools import product
 
+from moabb.datasets import BNCI2014008 as bnci_als
+from moabb.datasets import BNCI2014009 as bnci_1
+from moabb.datasets import BNCI2015003 as bnci_2
+from moabb.datasets import (
+    EPFLP300,
+    Huebner2017,
+    Huebner2018,
+    Lee2019_ERP,
+    Sosulski2019,
+    bi2013a,
+)
 from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import make_pipeline
 
 import spatialmodel_lda.classification.fit_functions as ff
+from spatialmodel_lda.benchmark.p300 import RejectP300
 from spatialmodel_lda.classification.feature_preprocessing import EpochsVectorizer
 from spatialmodel_lda.classification.shrinkage_lda import (
     ShrinkageLinearDiscriminantAnalysis as ShrinkageLDA,
 )
 from spatialmodel_lda.classification.spatial_model_lda import SpatialOnlyLda
+
+allowed_datasets = dict()
+allowed_datasets["erp"] = [
+    "spot",
+    "llp",
+    "mix",
+    "epfl",
+    "bnci_1",
+    "bnci_als",
+    "bnci_2",
+    "braininvaders",
+    "lee",
+]
+# allowed_datasets["imagery"] = ["physionet_mi", "weibo2014", "munich_mi", "schirrmeister2017"]
+
+
+def get_allowed_datasets():
+    return allowed_datasets
+
+
+def get_erp_benchmark_config(dataset_name, cfg_prepro, subjects=None, sessions=None):
+    benchmark_cfg = dict()
+    paradigms = dict()
+    # check if any preprocessing config is a list, e.g. have multiple values
+    if any([type(v) is list for v in cfg_prepro.values()]):
+        # get keys that have multiple values
+        multi_keys = [(k, v)[0] for k, v in cfg_prepro.items() if type(v) is list]
+        # generate key/value pairs for naming the paradigm
+        paradigm_keys = itertools.product(*[[key] * len(cfg_prepro[key]) for key in multi_keys])
+        paradigm_vals = itertools.product(*[cfg_prepro[key] for key in multi_keys])
+        for pkey, pval in zip(paradigm_keys, paradigm_vals):
+            # combine all multi-value keys with the specific value
+            paradigm_name = "__".join([f"{k}_{v}" for k, v in zip(pkey, pval)])
+            cfg_prepro.update(dict(zip(pkey, pval)))
+            paradigms[paradigm_name] = RejectP300(
+                resample=cfg_prepro["sampling_rate"],
+                fmin=cfg_prepro["fmin"],
+                fmax=cfg_prepro["fmax"],
+                reject_uv=cfg_prepro["reject_uv"],
+                baseline=cfg_prepro["baseline"],
+                reject_tmin=cfg_prepro["reject_tmin"],
+                reject_tmax=cfg_prepro["reject_tmax"],
+            )
+    else:
+        paradigms["default"] = RejectP300(
+            resample=cfg_prepro["sampling_rate"],
+            fmin=cfg_prepro["fmin"],
+            fmax=cfg_prepro["fmax"],
+            reject_uv=cfg_prepro["reject_uv"],
+            baseline=cfg_prepro["baseline"],
+            reject_tmin=cfg_prepro["reject_tmin"],
+            reject_tmax=cfg_prepro["reject_tmax"],
+        )
+    if dataset_name == "spot":
+        d = Sosulski2019()
+    elif dataset_name == "llp":
+        d = Huebner2017()
+    elif dataset_name == "mix":
+        d = Huebner2018()
+    elif dataset_name == "epfl":
+        d = EPFLP300()
+        d.unit_factor = 1
+        d.n_channels = 32
+    elif dataset_name == "bnci_1":
+        d = bnci_1()
+        d.n_channels = 16
+    elif dataset_name == "bnci_als":
+        d = bnci_als()
+        d.n_channels = 8
+    elif dataset_name == "bnci_2":
+        d = bnci_2()
+        d.n_channels = 8
+    elif dataset_name == "braininvaders":
+        d = bi2013a(NonAdaptive=True, Adaptive=True, Training=True, Online=True)
+        d.n_channels = 16
+    elif dataset_name == "lee":
+        d = Lee2019_ERP(sessions=sessions)
+        d.n_channels = 62
+    else:
+        raise ValueError(f"Dataset {dataset_name} not recognized.")
+
+    load_ival = [0, 1]
+    d.interval = load_ival
+    if subjects is not None:
+        d.subject_list = [d.subject_list[i] for i in subjects]
+    benchmark_cfg["dataset"] = d
+    benchmark_cfg["n_channels"] = d.n_channels
+    benchmark_cfg["paradigms"] = paradigms
+    return benchmark_cfg
 
 
 def get_info_params():
