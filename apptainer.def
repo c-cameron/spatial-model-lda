@@ -1,0 +1,27 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%setup
+	git clone . ${APPTAINER_ROOTFS}/spatial-model-lda
+
+%files
+    requirements.txt
+%post
+	apt-get update && apt-get install -y python3 python3-pip build-essential python3-venv git
+	cd ${APPTAINER_ROOTFS}/spatial-model-lda
+	echo $PWD
+	git status
+	python3 -m venv spatialda_venv
+	. ${APPTAINER_ROOTFS}/spatial-model-lda/spatialda_venv/bin/activate
+	pip3 install --upgrade pip
+	pip3 install cython wheel
+	pip3 install -r ${APPTAINER_ROOTFS}/requirements.txt
+	pip3 install ${APPTAINER_ROOTFS}/spatial-model-lda
+	echo "export SPATIALDA_COMMIT=$(git rev-parse HEAD)" >>$APPTAINER_ENVIRONMENT
+	echo "export INSTALL_DIR=$PWD" >>APPTAINER_ENVIRONMENT
+	echo ". /spatial-model-lda/spatialda_venv/bin/activate" >>$APPTAINER_ENVIRONMENT
+
+%runscript
+	echo "Using Apptainer spatial-model-lda"
+	echo "Commit: $SPATIALDA_COMMIT"
+	exec python3 -I "$@"

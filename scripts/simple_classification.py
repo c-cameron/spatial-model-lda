@@ -16,6 +16,7 @@ import yaml
 from spatialmodel_lda.benchmark.evaluations import RunbasedBciEvaluation
 from spatialmodel_lda.benchmark.utils import (
     create_erp_bench_debug,
+    get_allowed_datasets,
     get_erp_benchmark_config,
     get_info_params,
 )
@@ -39,18 +40,8 @@ copyfile(ANALYSIS_CONFIG_FILE, RESULTS_FOLDER / ANALYSIS_CONFIG_FILE)
 with open(RESULTS_FOLDER / ANALYSIS_CONFIG_FILE, "r") as conf_f:  # use local analysis config
     ana_cfg = yaml.load(conf_f, Loader=yaml.FullLoader)
 
-VALID_DATASETS = [
-    "bnci_1",
-    "spot",
-    "llp",
-    "mix",
-]
-from moabb.datasets import BNCI2014009 as bnci_1
-from moabb.datasets import Sosulski2019
-
-# TODO use all in Moabb available Datasets
-
 bci_paradigm = "erp"
+VALID_DATASETS = get_allowed_datasets(bci_paradigm)
 
 parser = argparse.ArgumentParser(add_help=True)
 parser.add_argument("dataset", help=f"Name of the dataset. Valid names: {VALID_DATASETS}")
