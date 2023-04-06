@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, Literal
 
 import numpy as np
 import sklearn.utils.multiclass
@@ -37,29 +37,29 @@ class SpatialOnlyLda(ShrinkageLinearDiscriminantAnalysis):
 
     def __init__(
         self,
-        priors=None,
-        n_times="infer",
-        n_channels=31,
-        standardize_shrink=True,
-        scm_gamma=None,
-        oracle_gamma=None,
-        calc_oracle_mean=False,
-        calc_oracle_cov=False,
-        use_oracle_cov=False,
-        model_corr_source: str = "decoupled",  # Can be decoupled or oracle or resting
-        model_var_source: str = "scm",  # can be decoupled or oracle or scm
-        distance_metric="3d",  # can also be 'angle' or 'geodesic'
+        priors: np.ndarray | None = None,
+        n_times: str | int = "infer",
+        n_channels: int = 31,
+        standardize_shrink: bool = True,
+        scm_gamma: float | None = None,
+        oracle_gamma: float | None = None,
+        calc_oracle_mean: bool = False,
+        calc_oracle_cov: bool = False,
+        use_oracle_cov: bool = False,
+        model_corr_source: Literal["resting", "decoupled", "oracle"] = "decoupled",
+        model_var_source: Literal["decoupled", "oracle", "scn"] = "scm",
+        distance_metric: Literal["3d", "angle", "geodesic"] = "3d",
         spatial_fit_function: Callable = ff.poly2_func_c1,
-        model_fit_diag=False,
-        model_gamma=0,
-        model_oracle_gamma=None,
-        fixed_scm_cond=None,  # Set a fixed condition number to reach by shrinkage
-        fixed_scm_cond_start=0.3,
-        fixed_scm_cond_rate=0.005,
-        fixed_avg_cond=None,
-        fixed_avg_cond_start=0.8,
-        fixed_avg_cond_rate=0.005,
-        return_info_params=True,
+        model_fit_diag: bool = False,
+        model_gamma: float = 0,
+        model_oracle_gamma: float | None = None,
+        fixed_scm_cond: float | None = None,  # Set a fixed condition number to reach by shrinkage
+        fixed_scm_cond_start: float = 0.3,
+        fixed_scm_cond_rate: float = 0.005,
+        fixed_avg_cond: float | None = None,
+        fixed_avg_cond_start: float = 0.8,
+        fixed_avg_cond_rate: float = 0.005,
+        return_info_params: bool = True,
     ):
         # SCM can be shrunk by either LW or by shrinking it to a certain condition number
         if fixed_scm_cond is not None and scm_gamma != 0:
@@ -290,7 +290,7 @@ class SpatialOnlyLda(ShrinkageLinearDiscriminantAnalysis):
         self.coef_ = w_arr
         self.intercept_ = b_arr
 
-    def _calc_info_params(self, cov_matrices, oracle_cov_list=None):
+    def _calc_info_params(self, cov_matrices: dict, oracle_cov_list: list | None = None):
         for key, val in cov_matrices.items():
             condlist = list()
             for matrix in val:
