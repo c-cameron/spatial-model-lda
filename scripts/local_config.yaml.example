@@ -1,0 +1,3 @@
+benchmark_meta_name: 'test_repository'
+results_root: '/home/<USER>/bci_results'
+plot_dir: '/home/<USER>/bci_results/plots'

@@ -41,8 +41,8 @@ allowed_datasets["erp"] = [
 # allowed_datasets["imagery"] = ["physionet_mi", "weibo2014", "munich_mi", "schirrmeister2017"]
 
 
-def get_allowed_datasets():
-    return allowed_datasets
+def get_allowed_datasets(bci_paradigm: str):
+    return allowed_datasets[bci_paradigm]
 
 
 def get_erp_benchmark_config(dataset_name, cfg_prepro, subjects=None, sessions=None):
@@ -144,7 +144,7 @@ def create_erp_bench_debug(
     n_channels,
     calc_oracle_mean=False,
 ):
-    cfg_vect = cfg[feature_preprocessing_key]["feature_preprocessing"]
+    cfg_vect = cfg["feature_preprocessing"][feature_preprocessing_key]
     c_sel = cfg_vect["select_ival"]
 
     vectorizers = dict()

@@ -8,63 +8,36 @@ erp:
     fmax: 16
     reject_tmin: ~ #0.1 #These should be the same as the select_ival for feature preprocessing
     reject_tmax: ~ #0.575
-
-  spatial_prior_cfg:
-    scm_gamma: [0,0.05,0.5]
-    model_gamma: [0,0.1,0.2,0.3,0.4]
-    distance_metric: ['3d']
-    spatial_fit_function: ['exp', "poly2", "line"] #, 'poly2','exp_fitted']#,'exp_zero','line_zero'] #'line_fitted', line
-    #model_var_source: ["scm"] #,"oracle","decoupled"]
-    #model_corr_source: ["oracle"]
-    return_info_params: [True]
-
-  fallback_modality: "tone_oddball"
-  evaluation:
-    limit_train_epos: []
-    train_test_split_ratio: []
-  tone_oddball:
-    feature_preprocessing:
-      jumping_means_ival: [] # this averages samples in each of the given intervals
-#        standard:
-#          ival:
-#            - [0.10, 0.169]
-#            - [0.17, 0.229]
-#            - [0.23, 0.299]
-#            - [0.30, 0.409]
-#            - [0.41, 0.499]
-#          D: 5
+  feature_preprocessing:
+    tone_oddball:
+      jumping_means_ival: [ ] # this averages samples in each of the given intervals
+        #        standard:
+        #          ival:
+        #            - [0.10, 0.169]
+        #            - [0.17, 0.229]
+        #            - [0.23, 0.299]
+        #            - [0.30, 0.409]
+        #            - [0.41, 0.499]
+        #          D: 5
       select_ival: # this selects all samples in the chosen interval
         erp:
-          ival: [0.1, 0.58]
+          ival: [ 0.1, 0.58 ]
           D: 20
-  word_oddball:
-    feature_preprocessing:
-      jumping_means_ival: []
-      #        standard:
-      #          ival:
-      #            - [0.18, 0.259]
-      #            - [0.26, 0.399]
-      #            - [0.40, 0.559]
-      #            - [0.56, 0.679]
-      #            - [0.68, 0.909]
-      #          D: 5
+    word_oddball:
+      jumping_means_ival: [ ]
       select_ival:
         erp:
-          ival: [0.18, 0.9]
+          ival: [ 0.18, 0.9 ]
           D: 30
-
-imagery:
-  data_preprocessing:
-    sampling_rate: 100 #40
-    baseline: ~ # !!python/tuple [-0.2, 0] # this requires different load_ival in utils.py
-    reject_uv: 850 #[~, 100] # 200
-    fmin: 8
-    fmax: 32
-    channels: null
-  spatial_prior_cfg:
-    feature_gamma: [0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
-    reference_gamma: [0.001, 0.003, 0.005, 0.007, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
+  fallback_modality: "tone_oddball"
+#  spatial_model_cfg:
+#    scm_gamma: [0,0.05,0.5]
+#    model_gamma: [0,0.1,0.2,0.3,0.4]
 #    distance_metric: ['3d']
-    spatial_fit_function: ['poly2', "exp_fitted"] #,'line','line_fitted','exp_fitted','exp_zero','line_zero']
-#    channelwise_fit: [False]
-    return_info_params: [True]
+#    spatial_fit_function: ['exp', "poly2", "line"] #, 'poly2','exp_fitted']#,'exp_zero','line_zero'] #'line_fitted', line
+#    #model_var_source: ["scm"] #,"oracle","decoupled"]
+#    #model_corr_source: ["oracle"]
+#    return_info_params: [True]
+#  evaluation:
+#    limit_train_epos: []
+#    train_test_split_ratio: []
