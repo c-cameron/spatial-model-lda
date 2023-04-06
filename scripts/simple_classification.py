@@ -5,7 +5,6 @@ import time
 import uuid
 import warnings
 from datetime import datetime as dt
-from itertools import product
 from pathlib import Path
 from shutil import copyfile
 
@@ -13,10 +12,8 @@ import moabb
 import numpy as np
 import pandas as pd
 import yaml
-from moabb.evaluations import WithinSessionEvaluation
 
 from spatialmodel_lda.benchmark.evaluations import RunbasedBciEvaluation
-from spatialmodel_lda.benchmark.p300 import RejectP300
 from spatialmodel_lda.benchmark.utils import (
     create_erp_bench_debug,
     get_erp_benchmark_config,
@@ -155,11 +152,12 @@ moabb.set_log_level("debug")
 
 print(f"Benchmark starting at: {dt.now()}")
 
-for paradigm in bench_cfg["paradigms"]:
-    print(f"Running paradigm config: {paradigm}")
-    paradigm_suffix = f"{unique_suffix}_{paradigm}"
+all_results = None
+for para_name, paradigm in bench_cfg["paradigms"].items():
+    print(f"Running paradigm config: {para_name}")
+    paradigm_suffix = f"{unique_suffix}_{para_name}"
     evaluation = RunbasedBciEvaluation(
-        paradigm=bench_cfg["paradigms"],
+        paradigm=paradigm,
         datasets=bench_cfg["dataset"],
         suffix=unique_suffix,
         overwrite=overwrite,

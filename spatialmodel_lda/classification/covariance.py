@@ -5,7 +5,9 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 
-def subtract_classwise_means(xTr, y, ext_mean=None):
+def subtract_classwise_means(
+    xTr: np.ndarray, y: np.ndarray, ext_mean: bool | None = None
+) -> tuple[np.ndarray, np.ndarray]:
     n_classes = len(np.unique(y))
     n_features = xTr.shape[0]
     X = np.zeros((n_features, 0))
@@ -35,7 +37,7 @@ def subtract_classwise_means(xTr, y, ext_mean=None):
     return X, cl_mean
 
 
-def calc_n_times(dim, n_channels, n_times):
+def calc_n_times(dim: int, n_channels: int, n_times: int) -> int:
     if type(n_times) is int:
         return n_times
     elif n_times == "infer":
@@ -70,9 +72,9 @@ def calc_scm(
 
 def shrinkage(
     X: np.ndarray,
-    gamma: Optional[float] = None,
-    T: Optional[np.ndarray] = None,
-    S: Optional[np.ndarray] = None,
+    gamma: float | None = None,
+    T: np.ndarray | None = None,
+    S: np.ndarray | None = None,
     standardize: bool = True,
 ) -> Tuple[np.ndarray, float]:
 
@@ -84,6 +86,8 @@ def shrinkage(
     Keep in Mind that when passing T  without standardization it
     needs to be multiplied by the N-1 the way it is implemented right now.
     With standardization its basically shrinking the correlations
+
+    Returns the shrunk covariance matrix and gamma
     """
 
     # case for gamma = auto (ledoit-wolf)
@@ -120,33 +124,34 @@ def shrinkage(
 
 
 def shrink_to_cond(
-    S,
-    T=None,
-    target_cond=2000,
-    start_gamma=0.3,
-    gamma_rate=0.005,
-    precision_thresh=50,
-    max_iters=1000,
+    SCM: np.ndarray,
+    T: np.ndarray | None = None,
+    target_cond: int = 2000,
+    start_gamma: float = 0.3,
+    gamma_rate: float = 0.005,
+    precision_thresh: float = 50,
+    max_iters: int = 1000,
 ):
     """Evaluates condition number of matrix shrunk with decreasing gammas until target condition is reached.
     Returns shrunk matrix and condition number"""
+    if not start_gamma <= 0 or start_gamma > 1:
+        raise ValueError("start_gamma needs to be between 0 and 1")
     iters = 0
     current_gamma = start_gamma
-    cond = np.linalg.cond(S)
+    cond = np.linalg.cond(SCM)
     cond_diff = cond - target_cond  #
     if T is None:
-        T = np.diag(np.diag(S))
+        T = np.diag(np.diag(SCM))
     while abs(cond_diff) > precision_thresh and iters < max_iters:
         # For now the rate is fixed, could include gradient for better accuracy.
         current_gamma -= gamma_rate
-        shrunk_S = (1 - current_gamma) * S + current_gamma * T
-        cond = np.linalg.cond(shrunk_S)
+        shrunk_SCM = (1 - current_gamma) * SCM + current_gamma * T
+        cond = np.linalg.cond(shrunk_SCM)
         cond_diff = cond - target_cond
-        # print(cond)
         iters += 1
         if cond_diff > 0:
             break
-        if current_gamma - gamma_rate < 0:
+        if current_gamma - gamma_rate <= 0:
             # print(f"reached lowest gamma: {gamma_rate}")
             break
-    return shrunk_S, current_gamma
+    return shrunk_SCM, current_gamma

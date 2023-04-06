@@ -21,26 +21,39 @@ def angle_fit_func(r, beta):
 
 
 # These are the new basic functions.
-def exp_func(x: np.ndarray, b, k, s):
-    return 2 - b * np.exp((k * x) ** s)
-
-
-def exp_func_huizenga(x: np.ndarray, alpha, beta):
-    return np.exp(-((x / alpha) ** beta))
+def straight_func(x: np.ndarray, a, c):
+    return a * x + c
 
 
 def poly2_func(x: np.ndarray, a, b, c):
     return a * x + b * x**2 + c
 
 
-def straight_func_free(x: np.ndarray, a, b):
-    return a * x + b
+def exp_func(x: np.ndarray, b, k, s):
+    return 2 - b * np.exp((k * x) ** s)
 
 
+def exp_func_huizenga(x: np.ndarray, alpha, beta):
+    "Spatial model function from Huizenga et al., 2002"
+    return np.exp(-((x / alpha) ** beta))
+
+
+def cos_func(x: np.ndarray, w):
+    return np.cos(w * x)
+
+
+# Modifications of basic functions with fixed parameters
+# Wouldve preferred to use partial functions but curve_fit needs to able to inspect the func args
 def straight_func1(x: np.ndarray, a):
     "assured to go through the origin"
-    b = 1
-    return a * x + b
+    c = 1
+    return a * x + c
+
+
+def poly2_func_c1(x: np.ndarray, a, b):
+    "assured to go through the origin"
+    c = 1
+    return a * x + b * x**2 + c
 
 
 def exp_func_bfree_s1(x: np.ndarray, b, k):
@@ -81,16 +94,16 @@ def exp_func_huizenga_s2(x: np.ndarray, alpha):
     return np.exp(-((x / alpha) ** 2))
 
 
-def poly2_func_cfree(x: np.ndarray, a, b, c):
-    return a * x + b * x**2 + c
-
-
-def poly2_func_c1(x: np.ndarray, a, b):
-    "assured to go through the origin"
-    c = 1
-    return a * x + b * x**2 + c
-
-
-def cos_func(x: np.ndarray, w):
-
-    return np.cos(w * x)
+fit_functions = {
+    "poly2-cfree": poly2_func,
+    "exp1-bsfree": exp_func,
+    "straight_func1": straight_func1,
+    "poly2-c1": poly2_func_c1,
+    "exp1-bfree-s1": exp_func_bfree_s1,
+    "exp_func_bfree_s2": exp_func_bfree_s2,
+    "exp1-b1-s1": exp_func_b1_s1,
+    "exp1-b1-s2": exp_func_b1_s2,
+    "exp1-b1-sfree": exp_func_b1_sfree,
+    "exp2_s1": exp_func_huizenga_s1,
+    "exp2_s2": exp_func_huizenga_s2,
+}
